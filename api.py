@@ -27,8 +27,8 @@ async def get_task(id: int) -> JSONResponse:
         )).fetchone()
         if result:
             return JSONResponse(dict(zip(
-                result,
-                TASKS_COLUMNS
+                TASKS_COLUMNS,
+                result
             )))
 
         else:
@@ -42,9 +42,9 @@ async def get_task(id: int) -> JSONResponse:
 @app.get("/api/get_tasks_ids")
 async def get_tasks_ids() -> JSONResponse:
     async with aiosqlite.connect(DB_PATH) as db:
-        result = await (await db.execute("SELECT * FROM tasks")).fetchall()
+        result = await (await db.execute("SELECT id FROM tasks")).fetchall()
         if result:
-            return JSONResponse({"ids":result})
+            return JSONResponse({"ids":result[0]})
 
         else:
             return JSONResponse({
@@ -53,4 +53,5 @@ async def get_tasks_ids() -> JSONResponse:
                 }
             })
 
-asyncio.run(create_tables())
+if __name__ == "__main__":
+    asyncio.run(create_tables())
