@@ -36,7 +36,7 @@ async def get_task(id: int) -> JSONResponse:
                 "detail":{
                     "msg":f"Task not found with id: {id}"
                 }
-            })
+            }, status_code=404)
 
 
 @app.get("/api/get_tasks_ids")
@@ -51,7 +51,7 @@ async def get_tasks_ids() -> JSONResponse:
                 "detail":{
                     "msg":"No tasks available"
                 }
-            })
+            }, status_code=404)
 
 if __name__ == "__main__":
     asyncio.run(create_tables())
