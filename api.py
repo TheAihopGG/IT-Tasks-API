@@ -5,7 +5,6 @@ from services.database import create_tables, TASKS_COLUMNS
 from data.settings import *
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse, PlainTextResponse
-from fastapi.requests import Request
 
 app = FastAPI()
 basicConfig(level=INFO)
@@ -17,6 +16,7 @@ __doc__ = """
 @app.get("api/help")
 async def help() -> PlainTextResponse:
     return PlainTextResponse(__doc__)
+
 
 @app.get("/api/get_task")
 async def get_task(id: int) -> JSONResponse:
@@ -37,7 +37,8 @@ async def get_task(id: int) -> JSONResponse:
                     "msg":f"Task not found with id: {id}"
                 }
             })
-    
+
+
 @app.get("/api/get_tasks_ids")
 async def get_tasks_ids() -> JSONResponse:
     async with aiosqlite.connect(DB_PATH) as db:
