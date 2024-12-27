@@ -2,7 +2,7 @@ from fastapi.responses import JSONResponse
 
 class ErrorResponse(JSONResponse):
     def __init__(
-        self, *,
+        self,
         msg: str,
         content = None,
         status_code = 404,

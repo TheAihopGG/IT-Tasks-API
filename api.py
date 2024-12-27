@@ -1,10 +1,11 @@
+import json
 import aiosqlite
 import asyncio
 from services.responses import *
 from logging import *
 from services.database import create_tables, TASKS_COLUMNS
 from data.settings import *
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Body, Request
 from fastapi.responses import JSONResponse, PlainTextResponse
 
 app = FastAPI()
@@ -22,21 +23,25 @@ async def help() -> PlainTextResponse:
 
 @app.get('/api/task')
 async def get_task(request: Request) -> JSONResponse:
+    body: dict = json.loads(request.headers.get('body', {}))
     # get values from headers
-    id: int = request.headers.get('id', None)
+    id: int = body.get('id', None)
     # validate
-    if id < 0:
+    if not isinstance(id, int):
+        return ErrorResponse(f'Id must be integer')
+    
+    elif id < 0:
         return ErrorResponse(f'Id must be bigger than 0')
     # return
     async with aiosqlite.connect(DB_PATH) as db:
-        if task := await (await db.execute(
-            'SELECT * FROM tasks WHERE id=?',
-            (id,)
-        )).fetchone():
-            return JSONResponse(dict(zip(
-                TASKS_COLUMNS,
-                task
-            )))
+        if task := dict(zip(
+            TASKS_COLUMNS,
+            await (await db.execute(
+                'SELECT * FROM tasks WHERE id=?',
+                (id,)
+            )).fetchone()
+        )):
+            return JSONResponse(task)
 
         else:
             return ErrorResponse(f'Task not found')
@@ -53,10 +58,11 @@ async def get_tasks_ids() -> JSONResponse:
             return ErrorResponse('No tasks available')
 
 
-@app.get('/api/task/by_tags')
+@app.get('/api/tasks/by_tags')
 async def get_tasks_by_tags(request: Request) -> JSONResponse:
+    body: dict = json.loads(request.headers.get('body', {}))
     # get values from headers
-    tags: list[str] = request.headers.get('tags', None)
+    tags: list[str] = body.get('tags', {})
     # validate
     if not tags:
         return ErrorResponse(f'Tags are required')
@@ -64,13 +70,13 @@ async def get_tasks_by_tags(request: Request) -> JSONResponse:
     elif not isinstance(tags, list):
         return ErrorResponse(f'Tags must be array')
     
-    elif len(tags) in range(1, MAX_REQUEST_TAGS_COUNT):
+    elif not len(tags) in range(1, MAX_REQUEST_TAGS_COUNT):
         return ErrorResponse(f'Limited max tags count. The limit is: {MAX_REQUEST_TAGS_COUNT}')
     # return
     async with aiosqlite.connect(DB_PATH) as db:
-        if tasks := [dict(zip(TASKS_COLUMNS, task)) for task in await (await db.execute('SELECT * FROM tasks'))]:
-            if tasks_with_tag := [task if all(tag in task['tags'] for tag in tags) else None for task in tasks]:
-                return JSONResponse({'tasks':tasks_with_tag})
+        if tasks := [dict(zip(TASKS_COLUMNS, task)) for task in await (await db.execute('SELECT * FROM tasks')).fetchall()]:
+            if tasks_with_tag := [task if all(tag.lower() in json.loads(task['tags']) for tag in tags) else None for task in tasks]:
+                return JSONResponse({'tasks':[task for task in tasks_with_tag if task is not None]})
             else:
                 return ErrorResponse(f'Tasks has not found with these tags: {tags}')
 
