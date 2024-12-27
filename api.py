@@ -42,7 +42,7 @@ async def get_task(request: Request) -> JSONResponse:
             return ErrorResponse(f'Task not found')
 
 
-@app.get('/api/get_tasks_ids')
+@app.get('/api/tasks/ids')
 async def get_tasks_ids() -> JSONResponse:
     # just returns all tasks ids
     async with aiosqlite.connect(DB_PATH) as db:
