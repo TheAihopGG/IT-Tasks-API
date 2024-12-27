@@ -17,7 +17,8 @@ async def create_tables():
             CREATE TABLE IF NOT EXISTS tasks (
                 id INTEGER PRIMARY KEY,
                 title TEXT,
-                text TEXT
+                text TEXT,
+                tags JSON DEFAULT []
             );
         """)
         await db.commit()
