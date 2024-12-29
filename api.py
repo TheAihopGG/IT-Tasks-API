@@ -15,7 +15,7 @@ __doc__ = '''
     GET /api/get_tasks_ids - returns tasks ids
 '''
 
-@app.get('api/help')
+@app.get('/api/help')
 async def help() -> PlainTextResponse:
     # return
     return PlainTextResponse(__doc__)
@@ -41,7 +41,7 @@ async def get_task(request: Request) -> JSONResponse:
                 (id,)
             )).fetchone()
         )):
-            return JSONResponse(task)
+            return JSONResponse({'task':task})
 
         else:
             return ErrorResponse(f'Task not found')
@@ -52,7 +52,7 @@ async def get_tasks_ids() -> JSONResponse:
     # just returns all tasks ids
     async with aiosqlite.connect(DB_PATH) as db:
         if tasks_ids := await (await db.execute('SELECT id FROM tasks')).fetchall():
-            return JSONResponse({'ids':tasks_ids[0]})
+            return JSONResponse({'ids':[task_id[0] for task_id in tasks_ids]})
 
         else:
             return ErrorResponse('No tasks available')
@@ -75,8 +75,15 @@ async def get_tasks_by_tags(request: Request) -> JSONResponse:
     # return
     async with aiosqlite.connect(DB_PATH) as db:
         if tasks := [dict(zip(TASKS_COLUMNS, task)) for task in await (await db.execute('SELECT * FROM tasks')).fetchall()]:
+            print(tasks)
             if tasks_with_tag := [task if all(tag.lower() in json.loads(task['tags']) for tag in tags) else None for task in tasks]:
-                return JSONResponse({'tasks':[task for task in tasks_with_tag if task is not None]})
+                print(tasks_with_tag)
+                if filtered_tasks := [task for task in tasks_with_tag if task is not None]:
+                    return JSONResponse({'tasks':filtered_tasks})
+
+                else:
+                    return ErrorResponse(f'Tasks has not found with these tags: {tags}')
+                
             else:
                 return ErrorResponse(f'Tasks has not found with these tags: {tags}')
 

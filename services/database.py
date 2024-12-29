@@ -7,6 +7,7 @@ TASKS_COLUMNS = (
     'id',
     'title',
     'text',
+    'image_url',
     'tags'
 )
 
@@ -19,6 +20,7 @@ async def create_tables():
                 id INTEGER PRIMARY KEY,
                 title TEXT,
                 text TEXT,
+                image_url TEXT,
                 tags JSON DEFAULT []
             );
         ''')
