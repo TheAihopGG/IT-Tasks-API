@@ -1,5 +1,7 @@
 # IT Tasks API
 
+![status](https://img.shields.io/badge/status-active-green.svg)
+
 This is pet-project, if has created to practice requests.
 
 ## Setup
