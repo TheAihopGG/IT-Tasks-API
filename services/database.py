@@ -5,9 +5,11 @@ from data.settings import *
 
 TASKS_COLUMNS = (
     'id',
-    'title',
-    'text',
     'image_url',
+    'title',
+    'topic',
+    'task',
+    'answer',
     'tags'
 )
 
@@ -18,9 +20,11 @@ async def create_tables():
         await db.executescript('''
             CREATE TABLE IF NOT EXISTS tasks (
                 id INTEGER PRIMARY KEY,
-                title TEXT,
-                text TEXT,
                 image_url TEXT,
+                title TEXT,
+                topic TEXT,
+                task TEXT,
+                answer TEXT,
                 tags JSON DEFAULT []
             );
         ''')
