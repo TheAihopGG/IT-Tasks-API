@@ -6,7 +6,7 @@ import json
 API_DOMAIN = 'http://127.0.0.1:8000'
 
 class ApiTestCase(unittest.TestCase):
-    def stest_get_task(self):
+    def test_get_task(self):
         response = requests.get(
             f'{API_DOMAIN}/api/task/',
             headers={
