@@ -22,10 +22,7 @@ async def help() -> PlainTextResponse:
 
 
 @app.get('/api/task')
-async def get_task(request: Request) -> JSONResponse:
-    body: dict = json.loads(request.headers.get('body', {}))
-    # get values from headers
-    id: int = body.get('id', None)
+async def get_task(id: int) -> JSONResponse:
     # validate
     if not isinstance(id, int):
         return ErrorResponse(f'Id must be integer')
@@ -34,13 +31,11 @@ async def get_task(request: Request) -> JSONResponse:
         return ErrorResponse(f'Id must be bigger than 0')
     # return
     async with aiosqlite.connect(DB_PATH) as db:
-        if task := dict(zip(
-            TASKS_COLUMNS,
-            await (await db.execute(
-                'SELECT * FROM tasks WHERE id=?',
-                (id,)
-            )).fetchone()
-        )):
+        if result := await (await db.execute(
+            'SELECT * FROM tasks WHERE id=?',
+            (id,)
+        )).fetchone():
+            task = dict(zip(TASKS_COLUMNS, result))
             return JSONResponse({'task':task})
 
         else:
@@ -59,10 +54,9 @@ async def get_tasks_ids() -> JSONResponse:
 
 
 @app.get('/api/tasks/by_tags')
-async def get_tasks_by_tags(request: Request) -> JSONResponse:
-    body: dict = json.loads(request.headers.get('body', {}))
+async def get_tasks_by_tags(tags: str) -> JSONResponse:
     # get values from headers
-    tags: list[str] = body.get('tags', {})
+    tags = tags.split(TAGS_SEPARATOR)
     # validate
     if not tags:
         return ErrorResponse(f'Tags are required')
@@ -74,7 +68,8 @@ async def get_tasks_by_tags(request: Request) -> JSONResponse:
         return ErrorResponse(f'Limited max tags count. The limit is: {MAX_REQUEST_TAGS_COUNT}')
     # return
     async with aiosqlite.connect(DB_PATH) as db:
-        if tasks := [dict(zip(TASKS_COLUMNS, task)) for task in await (await db.execute('SELECT * FROM tasks')).fetchall()]:
+        if tasks := await (await db.execute('SELECT * FROM tasks')).fetchall():
+            tasks = [dict(zip(TASKS_COLUMNS, task)) for task in tasks]
             if tasks_with_tag := [task if all(tag.lower() in json.loads(task['tags']) for tag in tags) else None for task in tasks]:
                 if filtered_tasks := [task for task in tasks_with_tag if task is not None]:
                     return JSONResponse({'tasks':filtered_tasks})
